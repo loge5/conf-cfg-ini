@@ -1,7 +1,7 @@
 var should = require('chai').should();
 var expect = require('chai').expect;
 var Config = require('./conf-cfg-ini');
-var testFilePath = './test.ini';
+
 var testData = [
     ";comment\n[SectionA]\na=1\nb=2\n",
     ";comment\r\n[SectionA]\r\na=1\r\nb=2\r\n",
