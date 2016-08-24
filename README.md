@@ -2,7 +2,7 @@
 **Encode and decode conf/cfg/ini-Files with Node.js**
 
 There are already a lot of ini-parser on the npm repository. 
-But none of these are fits all my needs. 
+But none of these fits all my needs. 
 So here is an attempt to create a very flexible but easy to use parser.
 
 **Features**
@@ -19,7 +19,7 @@ npm install conf-cfg-ini
 
 ### Usage ###
 ```
-//read a ini/conf/cfg-String from file
+//read config-String from file
 var fs = require('fs');
 var raw = fs.readFileSync('./test.ini');
 
@@ -30,11 +30,11 @@ config.options.lineEnding = config.detectLineEnding(raw);
 //decode to get a simple js object
 var configObject = config.decode(raw);
 
-//encode to get a ini/conf/cfg-String
+//encode to get a config-String
 var configString = config.encode(configObject);
 ```
 
-Example ini-Data:
+Example Config:
 ```
 [SectionA]
 a=1
@@ -74,48 +74,12 @@ var config = new Config({
 config.options.lineEndig = "\n";
 ```
 
-#### lineEnding ####
-*default: "\r\n""*
-
-Witch line endings (breaks) are used in file.
-Can be any string. For automatic detection use:
-
-```
-config.options.lineEnding = config.detectLineEnding(raw);
-```
-
-#### sectionOpenIdentifier ####
-*default: "["*
-
-First char at Line that identify a section
-
-#### sectionCloseIdentifier ####
-*default: "]"*
-
-Last char at Line that identify a section
-
-### defaultValue ###
-*default: true*
-
-This value will be set to any keys without a value - like this:
-```
-foo=
-```
-### assignIdentifier ###
-*default: "="*
-
-Identifies end of key and begin of value.
-
-### commentIdentifiers ###
-*default: [";"]*
-
-Identifier for comment lines. Here you can set a list of strings.
-Have ; # or // for comments? Set it to:
-```
-config.commentIdentifiers = [";","#","//"];
-```
-
-### trimLines ###
-*default: true*
-
-Should spaces ignored at begin and end of line?
+| Option                   | Default       | Description                              |
+| ------------------------ | ------------- | ---------------------------------------- |
+| lineEnding               | "\r\n"        | Line ending (break)                      |
+| sectionOpenIdentifier    | "["           | First char of section line               |
+| sectionCloseIdentifier   | "]"           | Last char of section line                |
+| defaultValue             | true          | Default value for keys without value     |
+| assignIdentifier         | "="           | String after key and before value        |
+| commentIdentifiers       | [";"]         | List of commentIdentifiers (strings)     |
+| trimLines                | true          | Ignore space                             |
