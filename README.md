@@ -1,12 +1,13 @@
 # conf-cfg-ini
-## Encode and decode conf/cfg/ini-Files with Node.js
+**Encode and decode conf/cfg/ini-Files with Node.js**
 
-There are allready a lot ini-parser on the npm. But none of these are fits my needs.
-So here is a attempt to create a very flexible but easy to use parser.
+There are already a lot of ini-parser on the npm repository. 
+But none of these are fits all my needs. 
+So here is an attempt to create a very flexible but easy to use parser.
 
-** Features **
+**Features**
 - Linebreak detection (windows, unix, mac)
-- Set identifiers for section, comments and assignment
+- Set custom identifiers for sections, comments and assignments
 - line trim is optional
 - set default value
 - tested with mocha+chai
@@ -16,11 +17,11 @@ So here is a attempt to create a very flexible but easy to use parser.
 npm install conf-cfg-ini
 ```
 
-### Usage Example ###
+### Usage ###
 ```
 //read a ini/conf/cfg-String from file
 var fs = require('fs');
-var raw = fs.readFileSync('./tbmformat.conf');
+var raw = fs.readFileSync('./test.ini');
 
 var Config = require('conf-cfg-ini');
 var config = new Config();
@@ -58,7 +59,7 @@ will be decoded to:
 ### Options ###
 There are two ways to set options:
 ```
-//set options as object at construction
+//set options at construction
 var config = new Config({
   lineEnding: "\r\n",
   sectionOpenIdentifier: '[',
@@ -72,13 +73,16 @@ var config = new Config({
 //or after construction
 config.options.lineEndig = "\n";
 ```
-here are the possible Options:
 
 #### lineEnding ####
 *default: "\r\n""*
 
-Witch line endigs (breaks) are used in file.
-Can be any string.
+Witch line endings (breaks) are used in file.
+Can be any string. For automatic detection use:
+
+```
+config.options.lineEnding = config.detectLineEnding(raw);
+```
 
 #### sectionOpenIdentifier ####
 *default: "["*
@@ -100,7 +104,7 @@ foo=
 ### assignIdentifier ###
 *default: "="*
 
-Identifies end of key and beginn of value.
+Identifies end of key and begin of value.
 
 ### commentIdentifiers ###
 *default: [";"]*
@@ -114,4 +118,4 @@ config.commentIdentifiers = [";","#","//"];
 ### trimLines ###
 *default: true*
 
-Should spaces ignored at beginn and end of line?
+Should spaces ignored at begin and end of line?
