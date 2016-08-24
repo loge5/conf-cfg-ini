@@ -1,5 +1,12 @@
 # conf-cfg-ini
+
+[![npm version](https://badge.fury.io/js/conf-cfg-ini.svg)](http://badge.fury.io/js/conf-cfg-ini)
+[![Dependencies](https://david-dm.org/loge5/conf-cfg-ini.svg)](https://david-dm.org/loge5/conf-cfg-ini) 
+[![devDependency Status](https://david-dm.org/loge5/conf-cfg-ini/dev-status.svg)](https://david-dm.org/loge5/conf-cfg-ini#info=devDependencies)
+
 **Encode and decode conf/cfg/ini-Files with Node.js**
+
+loge5/conf-cfg-ini
 
 There are already a lot of ini-parser on the npm repository. 
 But none of these fits all my needs. 
@@ -71,7 +78,7 @@ var config = new Config({
 });
 
 //or after construction
-config.options.lineEndig = "\n";
+config.options.lineEnding = "\n";
 ```
 
 | Option                   | Default       | Description                              |
