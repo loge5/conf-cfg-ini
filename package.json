@@ -1,13 +1,12 @@
 {
   "name": "conf-cfg-ini",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "encode and decode ini,conf,cfg files",
   "author": "Rolf Loges",
   "license": "MIT",
   "main": "conf-cfg-ini.js",
   "repository": "https://github.com/loge5/conf-cfg-ini",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "chai": "^3.5.0",
     "mocha": "^2.4.5"
