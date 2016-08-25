@@ -21,12 +21,12 @@ So here is an attempt to create a very flexible but easy to use parser.
 - tested with mocha+chai
 
 ### Installation ###
-```
+```Shell
 npm install conf-cfg-ini
 ```
 
 ### Usage ###
-```
+```JavaScript
 //read config-String from file
 var fs = require('fs');
 var raw = fs.readFileSync('./test.ini');
@@ -43,7 +43,7 @@ var configString = config.encode(configObject);
 ```
 
 Example Config:
-```
+```INI
 [SectionA]
 a=1
 b=2
@@ -52,7 +52,7 @@ b=2
 bar=foo
 ```
 will be decoded to:
-```
+```JSON
 {
   "SectionA": {
     "a": "1",
@@ -66,7 +66,7 @@ will be decoded to:
 
 ### Options ###
 There are two ways to set options:
-```
+```JavaScript
 //set options at construction
 var config = new Config({
   lineEnding: "\r\n",

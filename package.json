@@ -1,6 +1,6 @@
 {
   "name": "conf-cfg-ini",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "encode and decode ini,conf,cfg files",
   "author": "Rolf Loges",
   "license": "MIT",
