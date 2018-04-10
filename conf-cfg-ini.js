@@ -2,6 +2,7 @@
  * Encode and decode ini/conf/cfg files
  * @author Rolf Loges
  * @licence MIT
+ * @param {{lineEnding: string, sectionOpenIdentifier: string, sectionCloseIdentifier: string, defaultValue: boolean, assignIdentifier: string, commentIdentifiers: string, trimLines: boolean}} options
  */
 function Config(options){
     this.options = {
@@ -12,7 +13,7 @@ function Config(options){
         assignIdentifier: "=",
         commentIdentifiers: [";"],
         trimLines: true
-    }
+    };
     if(typeof options === 'object'){
         this.setOptions(options);
     }
@@ -21,8 +22,8 @@ function Config(options){
 /**
  * Decode a config-string
  * 
- * @param data {string}
- * @return object
+ * @param {string} data
+ * @return {{}}
  */
 Config.prototype.decode = function(data){
     if(typeof data != 'string'){
@@ -77,7 +78,7 @@ Config.prototype.decode = function(data){
  * Encode a object
  * no nesting section supported!
  * 
- * @param object {object}
+ * @param {{}} object
  * @return {string}
  */
 Config.prototype.encode = function(object){
@@ -112,6 +113,7 @@ Config.prototype.encode = function(object){
 
 /**
  * Set Options
+ * @param {{lineEnding: string, sectionOpenIdentifier: string, sectionCloseIdentifier: string, defaultValue: boolean, assignIdentifier: string, commentIdentifiers: string, trimLines: boolean}} options
  */
 Config.prototype.setOptions = function(options){
     if(typeof options !== 'object'){
@@ -128,7 +130,8 @@ Config.prototype.setOptions = function(options){
 /**
  * Try to detect the used line ending
  * (windows, unix, mac)
- * @return {string]
+ * @param {string} data
+ * @return {string}
  */
 Config.prototype.detectLineEnding = function(data){
     var hasCaridgeReturn = data.indexOf("\r") !== -1;
@@ -150,6 +153,11 @@ Config.prototype.detectLineEnding = function(data){
     }
 }
 
+/**
+ * @param {string} string
+ * @param {string[]} stringList
+ * @return {boolean}
+ */
 function stringBeginsWithOnOfTheseStrings(string, stringList){
     for(var i = 0; i < stringList.length; i++){
         if(string.indexOf(stringList[i]) === 0){
