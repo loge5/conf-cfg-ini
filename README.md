@@ -91,3 +91,4 @@ config.options.lineEnding = "\n";
 | assignIdentifier         | "="           | String after key and before value        |
 | commentIdentifiers       | [";"]         | List of commentIdentifiers (strings)     |
 | trimLines                | true          | Ignore space                             |
+| valueIdentifier          | undefined     | surroundings of values (key="value1")    |

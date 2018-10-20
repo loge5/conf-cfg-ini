@@ -11,6 +11,7 @@ function Config(options){
         sectionCloseIdentifier: ']',
         defaultValue: true,
         assignIdentifier: "=",
+        valueIdentifier: undefined,
         commentIdentifiers: [";"],
         trimLines: true
     };
@@ -65,6 +66,9 @@ Config.prototype.decode = function(data){
             key = line.substr(0,assignPosition);
             value = line.substr(assignPosition+this.options.assignIdentifier.length);
         }
+        if (typeof this.options.valueIdentifier === 'string') {
+            value = this.valueTrim(value, this.options.valueIdentifier);
+        }
         if(typeof currentSection === 'undefined'){
             result[key] = value;
         } else {
@@ -85,6 +89,11 @@ Config.prototype.encode = function(object){
     var resultSections = "";
     var resultAttributesWithoutSection = "";
     var sections = Object.keys(object);
+    if (typeof this.options.valueIdentifier === 'string'){
+        var valueIdentifier = this.options.valueIdentifier;
+    } else {
+        var valueIdentifier = "";
+    }
     for(var i = 0; i < sections.length; i++){
         if(typeof object[sections[i]] === 'object'){
             if(resultSections != ""){
@@ -98,7 +107,9 @@ Config.prototype.encode = function(object){
             for(var j = 0; j < attributes.length; j++){
                 resultSections += attributes[j];
                 resultSections += this.options.assignIdentifier;
+                resultSections += valueIdentifier;
                 resultSections += object[sections[i]][attributes[j]];
+                resultSections += valueIdentifier;
                 resultSections += this.options.lineEnding;
             }
         } else {
@@ -151,6 +162,19 @@ Config.prototype.detectLineEnding = function(data){
     } else {
         return "\n";
     }
+}
+
+/**
+ * @param string value
+ * @param string chars
+ */
+Config.prototype.valueTrim = function(value, chars){
+    var charsEscaped = chars.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    var regEx = new RegExp("^["+charsEscaped+"]?");
+    value = value.replace(regEx, '');
+    regEx = new RegExp("["+charsEscaped+"]?$");
+    value = value.replace(regEx, '');
+    return value;
 }
 
 /**

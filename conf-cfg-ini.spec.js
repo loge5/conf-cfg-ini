@@ -112,4 +112,24 @@ describe('Config', function() {
         expect(result.Section.foo).to.equal("bar");
     });
 
+    it('valueTrim should trim custom chars', function () {
+        var config = new Config();
+        expect(config.valueTrim('"Te"s"t"', '"')).to.equal('Te"s"t');
+        expect(config.valueTrim('"Te"s"t"', '')).to.equal('"Te"s"t"');
+        expect(config.valueTrim('"Te"s"t"', '#')).to.equal('"Te"s"t"');
+        expect(config.valueTrim('""Te"s"t""', '""')).to.equal('"Te"s"t"');
+        expect(config.valueTrim('[Te"s"t]', '[]')).to.equal('Te"s"t');
+    })
+
+    it('valueIdentifiers should trimed or added', function () {
+        var data = "[SectionA]\nkey1='val1'\nkey2='val2'\n";
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        config.options.valueIdentifier = "'"
+        var result = config.decode(data);
+        expect(result.SectionA.key1).to.equal("val1");
+        expect(result.SectionA.key2).to.equal("val2");
+        var data2 = config.encode(result);
+        expect(data2).to.equal(data);
+    })
 });
