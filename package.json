@@ -6,10 +6,9 @@
   "license": "MIT",
   "main": "conf-cfg-ini.js",
   "repository": "https://github.com/loge5/conf-cfg-ini",
-  "dependencies": {},
   "devDependencies": {
     "chai": "^4.1.2",
-    "mocha": "^5.0.5"
+    "mocha": "^6.1.4"
   },
   "scripts": {
     "test": "mocha conf-cfg-ini.spec.js"
