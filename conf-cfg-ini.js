@@ -2,7 +2,7 @@
  * Encode and decode ini/conf/cfg files
  * @author Rolf Loges
  * @licence MIT
- * @param {{lineEnding: string, sectionOpenIdentifier: string, sectionCloseIdentifier: string, defaultValue: boolean, assignIdentifier: string, commentIdentifiers: string, trimLines: boolean}} options
+ * @param {{lineEnding: string, sectionOpenIdentifier: string, sectionCloseIdentifier: string, defaultValue: boolean, assignIdentifier: string, commentIdentifiers: string, trimLines: boolean, ignoreMultipleAssignIdentifier: boolean}} options
  */
 function Config(options){
     this.options = {
@@ -13,7 +13,8 @@ function Config(options){
         assignIdentifier: "=",
         valueIdentifier: undefined,
         commentIdentifiers: [";"],
-        trimLines: true
+        trimLines: true,
+        ignoreMultipleAssignIdentifier: false
     };
     if(typeof options === 'object'){
         this.setOptions(options);
@@ -63,8 +64,16 @@ Config.prototype.decode = function(data){
             key = line;
             value = this.options.defaultValue;
         } else {
+            var assignIdentifierLength = this.options.assignIdentifier.length
+            if (this.options.ignoreMultipleAssignIdentifier) {
+                var regExp = new RegExp(escapeRegExp(this.options.assignIdentifier) + '+')
+                var matchResult = line.match(regExp)
+                if (matchResult !== null) {
+                    assignIdentifierLength = matchResult[0].length
+                }
+            }
             key = line.substr(0,assignPosition);
-            value = line.substr(assignPosition+this.options.assignIdentifier.length);
+            value = line.substr(assignPosition+assignIdentifierLength);
         }
         if (typeof this.options.valueIdentifier === 'string') {
             value = this.valueTrim(value, this.options.valueIdentifier);
@@ -189,6 +198,14 @@ function stringBeginsWithOnOfTheseStrings(string, stringList){
         }
     }
     return false;
+}
+
+/**
+ * @param {string} string
+ * @returns {string}
+ */
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 module.exports = Config;

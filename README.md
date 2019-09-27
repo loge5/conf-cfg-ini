@@ -82,13 +82,14 @@ var config = new Config({
 config.options.lineEnding = "\n";
 ```
 
-| Option                   | Default       | Description                              |
-| ------------------------ | ------------- | ---------------------------------------- |
-| lineEnding               | "\r\n"        | Line ending (break)                      |
-| sectionOpenIdentifier    | "["           | First char of section line               |
-| sectionCloseIdentifier   | "]"           | Last char of section line                |
-| defaultValue             | true          | Default value for keys without value     |
-| assignIdentifier         | "="           | String after key and before value        |
-| commentIdentifiers       | [";"]         | List of commentIdentifiers (strings)     |
-| trimLines                | true          | Ignore space                             |
-| valueIdentifier          | undefined     | surroundings of values (key="value1")    |
+| Option                         | Default       | Description                              |
+| ------------------------------ | ------------- | ---------------------------------------- |
+| lineEnding                     | "\r\n"        | Line ending (break)                      |
+| sectionOpenIdentifier          | "["           | First char of section line               |
+| sectionCloseIdentifier         | "]"           | Last char of section line                |
+| defaultValue                   | true          | Default value for keys without value     |
+| assignIdentifier               | "="           | String after key and before value        |
+| commentIdentifiers             | [";"]         | List of commentIdentifiers (strings)     |
+| trimLines                      | true          | Ignore space                             |
+| valueIdentifier                | undefined     | surroundings of values (key="value1")    |
+| ignoreMultipleAssignIdentifier | false         | `A==B` would be read as `A=B` (usefull for tab/spaced files)|

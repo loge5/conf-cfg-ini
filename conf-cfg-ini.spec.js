@@ -5,7 +5,7 @@ var Config = require('./conf-cfg-ini');
 var testData = [
     ";comment\n[SectionA]\na=1\nb=2\n",
     ";comment\r\n[SectionA]\r\na=1\r\nb=2\r\n",
-    "stray=true;comment\r\n[SectionA]\r\na=1\r\nb=2\r\n",
+    "stray=true;comment\r\n[SectionA]\r\na=1\r\nb=2\r\n"
 ];
 
 describe('Config', function() {
@@ -131,5 +131,18 @@ describe('Config', function() {
         expect(result.SectionA.key2).to.equal("val2");
         var data2 = config.encode(result);
         expect(data2).to.equal(data);
+    })
+
+    it('ignoreMultipleAssignIdentifier should ignore multiple assing identifiers', function () {
+        var data = "a\t1\nb\t\t2\nc\t3\t\n";
+        var config = new Config();
+        config.options.assignIdentifier = '\t'
+        config.options.lineEnding = "\n";
+        config.options.ignoreMultipleAssignIdentifier = true;
+        config.options.trimLines = false;
+        var result = config.decode(data);
+        expect(result.a).to.equal("1");
+        expect(result.b).to.equal("2");
+        expect(result.c).to.equal("3\t");
     })
 });
