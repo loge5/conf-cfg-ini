@@ -112,6 +112,16 @@ describe('Config', function() {
         expect(result.Section.foo).to.equal("bar");
     });
 
+    it('decode should prevent prototype pollution attacks', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        config.options.assignIdentifier = ":";
+        var result = config.decode("[__proto__]\nfoo:bar\n");
+        should.not.exist(result.__proto__.foo);
+        result = config.decode("[Section]\n__proto__:bar\n");
+        expect(result.Section.__proto__).to.not.equal("bar");
+    });
+
     it('valueTrim should trim custom chars', function () {
         var config = new Config();
         expect(config.valueTrim('"Te"s"t"', '"')).to.equal('Te"s"t');

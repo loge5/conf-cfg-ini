@@ -35,6 +35,7 @@ Config.prototype.decode = function(data){
             throw new Error('expecting string but got '+typeof data);
         }
     }
+    var protectedKeys = ['__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__', '__proto__'];
     var result = {};
     var currentSection = undefined;
     var lines = data.split(this.options.lineEnding);
@@ -51,7 +52,7 @@ Config.prototype.decode = function(data){
         var newSection = line.match(sectionRegExp);
         if(newSection !== null){
             currentSection = newSection[1];
-            if(typeof result[currentSection] === 'undefined'){
+            if(typeof result[currentSection] === 'undefined' && !protectedKeys.includes(currentSection)){
                 result[currentSection] = {};
             }
             continue;
@@ -77,6 +78,9 @@ Config.prototype.decode = function(data){
         }
         if (typeof this.options.valueIdentifier === 'string') {
             value = this.valueTrim(value, this.options.valueIdentifier);
+        }
+        if (protectedKeys.includes(currentSection) || protectedKeys.includes(key)) {
+            continue;
         }
         if(typeof currentSection === 'undefined'){
             result[key] = value;
