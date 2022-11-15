@@ -7,8 +7,8 @@
   "main": "conf-cfg-ini.js",
   "repository": "https://github.com/loge5/conf-cfg-ini",
   "devDependencies": {
-    "chai": "^4.3.6",
-    "mocha": "^9.2.0"
+    "chai": "^4.3.7",
+    "mocha": "^10.1.0"
   },
   "scripts": {
     "test": "mocha conf-cfg-ini.spec.js"
