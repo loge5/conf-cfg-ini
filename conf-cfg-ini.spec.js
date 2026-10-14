@@ -153,4 +153,37 @@ describe('Config', function() {
         expect(result.b).toBe("2");
         expect(result.c).toBe("3\t");
     })
+
+    it('encode should write an array of objects as repeated sections', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        var result = config.encode({
+            Interface: {a: "1"},
+            Peers: [{b: "2"}, {c: "3"}]
+        });
+        expect(result).toBe("[Interface]\na=1\n\n[Peer]\nb=2\n\n[Peer]\nc=3\n");
+    })
+
+    it('encode should write no section for an empty array', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        expect(config.encode({Section: {a: "1"}, Peers: []})).toBe("[Section]\na=1\n");
+    })
+
+    it('encode should singularize array section names', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        expect(config.encode({Entries: [{a: "1"}]})).toBe("[Entry]\na=1\n");
+        expect(config.encode({Address: [{a: "1"}]})).toBe("[Address]\na=1\n");
+        expect(config.encode({Peer: [{a: "1"}]})).toBe("[Peer]\na=1\n");
+        config.options.singularize = function(key){ return key === 'Children' ? 'Child' : key; };
+        expect(config.encode({Children: [{a: "1"}]})).toBe("[Child]\na=1\n");
+    })
+
+    it('encode should not split arrays containing non-objects into sections', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        expect(config.encode({Tags: ["a", "b"]})).toBe("[Tags]\n0=a\n1=b\n");
+        expect(config.encode({Peers: [{a: "1"}, null]})).toBe("[Peers]\n0=[object Object]\n1=null\n");
+    })
 });

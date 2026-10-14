@@ -64,6 +64,18 @@ will be decoded to:
 }
 ```
 
+An array of objects is encoded as repeated sections named by the singularized key:
+```JavaScript
+config.encode({ Peers: [{ a: 1 }, { b: 2 }] });
+```
+```INI
+[Peer]
+a=1
+
+[Peer]
+b=2
+```
+
 ### Options ###
 There are two ways to set options:
 ```JavaScript
@@ -93,3 +105,4 @@ config.options.lineEnding = "\n";
 | trimLines                      | true          | Ignore space                             |
 | valueIdentifier                | undefined     | surroundings of values (key="value1")    |
 | ignoreMultipleAssignIdentifier | false         | `A==B` would be read as `A=B` (usefull for tab/spaced files)|
+| singularize                    | naive english | Function mapping an array key to its section name (`Peers` => `Peer`). The default only strips `s`/`ies`, so irregular words (`Status`, `Children`) need a custom function|

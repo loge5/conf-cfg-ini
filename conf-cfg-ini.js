@@ -2,7 +2,7 @@
  * Encode and decode ini/conf/cfg files
  * @author Rolf Loges
  * @licence MIT
- * @param {{lineEnding: string, sectionOpenIdentifier: string, sectionCloseIdentifier: string, defaultValue: boolean, assignIdentifier: string, commentIdentifiers: string, trimLines: boolean, ignoreMultipleAssignIdentifier: boolean}} options
+ * @param {{lineEnding: string, sectionOpenIdentifier: string, sectionCloseIdentifier: string, defaultValue: boolean, assignIdentifier: string, commentIdentifiers: string, trimLines: boolean, ignoreMultipleAssignIdentifier: boolean, singularize: function(string): string}} options
  */
 function Config(options){
     this.options = {
@@ -14,7 +14,8 @@ function Config(options){
         valueIdentifier: undefined,
         commentIdentifiers: [";"],
         trimLines: true,
-        ignoreMultipleAssignIdentifier: false
+        ignoreMultipleAssignIdentifier: false,
+        singularize: singularize
     };
     if(typeof options === 'object'){
         this.setOptions(options);
@@ -94,6 +95,8 @@ Config.prototype.decode = function(data){
 /**
  * Encode a object
  * no nesting section supported!
+ * An array of objects is encoded as repeated sections named by the singularized key
+ * (e.g. "Peers" becomes "[Peer]").
  * 
  * @param {{}} object
  * @return {string}
@@ -102,33 +105,25 @@ Config.prototype.encode = function(object){
     var resultSections = "";
     var resultAttributesWithoutSection = "";
     var sections = Object.keys(object);
-    if (typeof this.options.valueIdentifier === 'string'){
-        var valueIdentifier = this.options.valueIdentifier;
-    } else {
-        var valueIdentifier = "";
-    }
     for(var i = 0; i < sections.length; i++){
-        if(typeof object[sections[i]] === 'object'){
-            if(resultSections != ""){
-                resultSections += this.options.lineEnding;
+        var value = object[sections[i]];
+        if(typeof value === 'object' && value !== null){
+            var sectionName = sections[i];
+            var sectionObjects = [value];
+            if(isArrayOfObjects(value)){
+                sectionName = this.options.singularize(sectionName);
+                sectionObjects = value;
             }
-            resultSections += this.options.sectionOpenIdentifier;
-            resultSections += sections[i];
-            resultSections += this.options.sectionCloseIdentifier;
-            resultSections += this.options.lineEnding;
-            var attributes = Object.keys(object[sections[i]]);
-            for(var j = 0; j < attributes.length; j++){
-                resultSections += attributes[j];
-                resultSections += this.options.assignIdentifier;
-                resultSections += valueIdentifier;
-                resultSections += object[sections[i]][attributes[j]];
-                resultSections += valueIdentifier;
-                resultSections += this.options.lineEnding;
+            for(var j = 0; j < sectionObjects.length; j++){
+                if(resultSections != ""){
+                    resultSections += this.options.lineEnding;
+                }
+                resultSections += this.encodeSection(sectionName, sectionObjects[j]);
             }
         } else {
             resultAttributesWithoutSection += sections[i];
             resultAttributesWithoutSection += this.options.assignIdentifier;
-            resultAttributesWithoutSection += object[sections[i]];
+            resultAttributesWithoutSection += value;
             resultAttributesWithoutSection += this.options.lineEnding;
         }
     }
@@ -136,8 +131,37 @@ Config.prototype.encode = function(object){
 }
 
 /**
+ * Encode a single section including its header
+ * 
+ * @param {string} name
+ * @param {{}} attributes
+ * @return {string}
+ */
+Config.prototype.encodeSection = function(name, attributes){
+    if (typeof this.options.valueIdentifier === 'string'){
+        var valueIdentifier = this.options.valueIdentifier;
+    } else {
+        var valueIdentifier = "";
+    }
+    var result = this.options.sectionOpenIdentifier;
+    result += name;
+    result += this.options.sectionCloseIdentifier;
+    result += this.options.lineEnding;
+    var keys = Object.keys(attributes);
+    for(var i = 0; i < keys.length; i++){
+        result += keys[i];
+        result += this.options.assignIdentifier;
+        result += valueIdentifier;
+        result += attributes[keys[i]];
+        result += valueIdentifier;
+        result += this.options.lineEnding;
+    }
+    return result;
+}
+
+/**
  * Set Options
- * @param {{lineEnding: string, sectionOpenIdentifier: string, sectionCloseIdentifier: string, defaultValue: boolean, assignIdentifier: string, commentIdentifiers: string, trimLines: boolean}} options
+ * @param {{lineEnding: string, sectionOpenIdentifier: string, sectionCloseIdentifier: string, defaultValue: boolean, assignIdentifier: string, commentIdentifiers: string, trimLines: boolean, ignoreMultipleAssignIdentifier: boolean, singularize: function(string): string}} options
  */
 Config.prototype.setOptions = function(options){
     if(typeof options !== 'object'){
@@ -202,6 +226,31 @@ function stringBeginsWithOnOfTheseStrings(string, stringList){
         }
     }
     return false;
+}
+
+/**
+ * @param {*} value
+ * @return {boolean}
+ */
+function isArrayOfObjects(value){
+    return Array.isArray(value) && value.every(function(item){
+        return typeof item === 'object' && item !== null && !Array.isArray(item);
+    });
+}
+
+/**
+ * Naive english singularization, used for section names of arrays
+ * @param {string} word
+ * @returns {string}
+ */
+function singularize(word){
+    if(/ies$/i.test(word)){
+        return word.slice(0, -3) + (word.slice(-3) === 'IES' ? 'Y' : 'y');
+    }
+    if(/[^s]s$/i.test(word)){
+        return word.slice(0, -1);
+    }
+    return word;
 }
 
 /**
