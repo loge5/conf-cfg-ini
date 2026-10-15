@@ -1,8 +1,22 @@
 /**
+ * @typedef {Object} ConfigOptions
+ * @property {string} [lineEnding]
+ * @property {string} [sectionOpenIdentifier]
+ * @property {string} [sectionCloseIdentifier]
+ * @property {*} [defaultValue]
+ * @property {string} [assignIdentifier]
+ * @property {string} [valueIdentifier]
+ * @property {string[]} [commentIdentifiers]
+ * @property {boolean} [trimLines]
+ * @property {boolean} [ignoreMultipleAssignIdentifier]
+ * @property {boolean} [sectionsAsArrays]
+ */
+
+/**
  * Encode and decode ini/conf/cfg files
  * @author Rolf Loges
  * @licence MIT
- * @param {{lineEnding: string, sectionOpenIdentifier: string, sectionCloseIdentifier: string, defaultValue: boolean, assignIdentifier: string, commentIdentifiers: string, trimLines: boolean, ignoreMultipleAssignIdentifier: boolean}} options
+ * @param {ConfigOptions} options
  */
 function Config(options){
     this.options = {
@@ -14,7 +28,8 @@ function Config(options){
         valueIdentifier: undefined,
         commentIdentifiers: [";"],
         trimLines: true,
-        ignoreMultipleAssignIdentifier: false
+        ignoreMultipleAssignIdentifier: false,
+        sectionsAsArrays: false
     };
     if(typeof options === 'object'){
         this.setOptions(options);
@@ -38,6 +53,7 @@ Config.prototype.decode = function(data){
     var result = {};
     var currentTarget = result;
     var lines = data.split(this.options.lineEnding);
+    var sectionRegExp = new RegExp("^"+escapeRegExp(this.options.sectionOpenIdentifier)+"(.*?)"+escapeRegExp(this.options.sectionCloseIdentifier)+"$");
     for(var i = 0; i < lines.length; i++){
         var line = lines[i];
         if(this.options.trimLines === true){
@@ -47,10 +63,9 @@ Config.prototype.decode = function(data){
             continue;
         }
         
-        var sectionRegExp = new RegExp("^\\"+this.options.sectionOpenIdentifier+"(.*?)\\"+this.options.sectionCloseIdentifier+"$");
         var newSection = line.match(sectionRegExp);
         if(newSection !== null){
-            currentTarget = openSection(result, newSection[1]);
+            currentTarget = openSection(result, newSection[1], this.options.sectionsAsArrays === true);
             continue;
         }
 
@@ -75,7 +90,7 @@ Config.prototype.decode = function(data){
         if (typeof this.options.valueIdentifier === 'string') {
             value = this.valueTrim(value, this.options.valueIdentifier);
         }
-        if (protectedKeys.includes(key)) {
+        if (protectedKeys.indexOf(key) !== -1) {
             continue;
         }
         currentTarget[key] = value;
@@ -91,45 +106,26 @@ Config.prototype.decode = function(data){
  * @return {string}
  */
 Config.prototype.encode = function(object){
-    var resultSections = "";
-    var resultAttributesWithoutSection = "";
-    var sections = Object.keys(object);
-    if (typeof this.options.valueIdentifier === 'string'){
-        var valueIdentifier = this.options.valueIdentifier;
-    } else {
-        var valueIdentifier = "";
-    }
-    for(var i = 0; i < sections.length; i++){
-        if(typeof object[sections[i]] === 'object'){
-            if(resultSections != ""){
-                resultSections += this.options.lineEnding;
-            }
-            resultSections += this.options.sectionOpenIdentifier;
-            resultSections += sections[i];
-            resultSections += this.options.sectionCloseIdentifier;
-            resultSections += this.options.lineEnding;
-            var attributes = Object.keys(object[sections[i]]);
-            for(var j = 0; j < attributes.length; j++){
-                resultSections += attributes[j];
-                resultSections += this.options.assignIdentifier;
-                resultSections += valueIdentifier;
-                resultSections += object[sections[i]][attributes[j]];
-                resultSections += valueIdentifier;
-                resultSections += this.options.lineEnding;
-            }
-        } else {
-            resultAttributesWithoutSection += sections[i];
-            resultAttributesWithoutSection += this.options.assignIdentifier;
-            resultAttributesWithoutSection += object[sections[i]];
-            resultAttributesWithoutSection += this.options.lineEnding;
+    var strayLines = "";
+    var sections = [];
+    var keys = Object.keys(object);
+    for(var i = 0; i < keys.length; i++){
+        var value = object[keys[i]];
+        if(typeof value !== 'object'){
+            strayLines += keys[i] + this.options.assignIdentifier + value + this.options.lineEnding;
+            continue;
+        }
+        var entries = this.options.sectionsAsArrays === true && isListOfSections(value) ? value : [value];
+        for(var k = 0; k < entries.length; k++){
+            sections.push(encodeSection(this.options, keys[i], entries[k]));
         }
     }
-    return resultAttributesWithoutSection+resultSections;
+    return strayLines + sections.join(this.options.lineEnding);
 }
 
 /**
  * Set Options
- * @param {{lineEnding: string, sectionOpenIdentifier: string, sectionCloseIdentifier: string, defaultValue: boolean, assignIdentifier: string, commentIdentifiers: string, trimLines: boolean}} options
+ * @param {ConfigOptions} options
  */
 Config.prototype.setOptions = function(options){
     if(typeof options !== 'object'){
@@ -174,7 +170,7 @@ Config.prototype.detectLineEnding = function(data){
  * @param string chars
  */
 Config.prototype.valueTrim = function(value, chars){
-    var charsEscaped = chars.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    var charsEscaped = escapeRegExp(chars);
     var regEx = new RegExp("^["+charsEscaped+"]?");
     value = value.replace(regEx, '');
     regEx = new RegExp("["+charsEscaped+"]?$");
@@ -190,18 +186,69 @@ var protectedKeys = ['__defineGetter__', '__defineSetter__', '__lookupGetter__',
  * stray key, go to a detached object and are dropped.
  * Only own properties count, so names like `constructor` or `toString`
  * never resolve to inherited members of Object.prototype.
+ * With `asArray` every occurrence of a section gets its own object, appended
+ * to an array; otherwise repeated sections share (and merge into) one object.
  * @param {{}} result
  * @param {string} name
+ * @param {boolean} asArray
  * @return {{}}
  */
-function openSection(result, name){
-    if(protectedKeys.includes(name)){
+function openSection(result, name, asArray){
+    if(protectedKeys.indexOf(name) !== -1){
         return {};
     }
     if(!Object.prototype.hasOwnProperty.call(result, name)){
-        result[name] = {};
+        result[name] = asArray ? [] : {};
     }
-    return typeof result[name] === 'object' ? result[name] : {};
+    var existing = result[name];
+    if(!asArray){
+        return isSectionObject(existing) ? existing : {};
+    }
+    if(!Array.isArray(existing)){
+        return {};
+    }
+    var section = {};
+    existing.push(section);
+    return section;
+}
+
+/**
+ * True for values that hold the keys of a section: objects, but not null or arrays.
+ * @param {*} value
+ * @return {boolean}
+ */
+function isSectionObject(value){
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * True for a non-empty array of section objects, which is encoded as repeated
+ * sections. Other arrays (e.g. of strings) are encoded as a single section
+ * with index keys, as without `sectionsAsArrays`.
+ * @param {*} value
+ * @return {boolean}
+ */
+function isListOfSections(value){
+    return Array.isArray(value) && value.length > 0 && value.every(isSectionObject);
+}
+
+/**
+ * Encode one section: header line followed by one line per key,
+ * terminated by a line ending.
+ *
+ * @param {ConfigOptions} options
+ * @param {string} name
+ * @param {{}} section
+ * @return {string}
+ */
+function encodeSection(options, name, section){
+    var valueIdentifier = typeof options.valueIdentifier === 'string' ? options.valueIdentifier : "";
+    var result = options.sectionOpenIdentifier + name + options.sectionCloseIdentifier + options.lineEnding;
+    var keys = Object.keys(section);
+    for(var i = 0; i < keys.length; i++){
+        result += keys[i] + options.assignIdentifier + valueIdentifier + section[keys[i]] + valueIdentifier + options.lineEnding;
+    }
+    return result;
 }
 
 /**

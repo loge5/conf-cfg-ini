@@ -3,7 +3,21 @@ var Config = require('./conf-cfg-ini');
 var testData = [
     ";comment\n[SectionA]\na=1\nb=2\n",
     ";comment\r\n[SectionA]\r\na=1\r\nb=2\r\n",
-    "stray=true;comment\r\n[SectionA]\r\na=1\r\nb=2\r\n"
+    "stray=true;comment\r\n[SectionA]\r\na=1\r\nb=2\r\n",
+    `;multiple sections with identical name
+[SectionA]
+a=1
+b=2
+c=3
+[SectionA]
+a=4
+b=5
+c=6
+[SectionA]
+a=7
+b=8
+c=9
+`
 ];
 
 describe('Config', function() {
@@ -79,18 +93,21 @@ describe('Config', function() {
         expect(result.SectionA.key).toBe("value");
     });
 
-    it('decode>encode>decode>encode return should produce consistent results', function () {
-        for(var i = 0; i < testData.length; i++){
-            var data = testData[i];
-            var config = new Config();
-            config.options.lineEnding = config.detectLineEnding(data);
-            var decoded1 = config.decode(data);
-            var encoded1 = config.encode(decoded1);
-            var decoded2 = config.decode(encoded1);
-            var encoded2 = config.encode(decoded2);
-            expect(encoded1).toBe(encoded2);
-            expect(decoded1).toEqual(decoded2);
-        }
+    [false, true].forEach(function (sectionsAsArrays) {
+        it('decode>encode>decode>encode return should produce consistent results (sectionsAsArrays=' + sectionsAsArrays + ')', function () {
+            for(var i = 0; i < testData.length; i++){
+                var data = testData[i];
+                var config = new Config();
+                config.options.lineEnding = config.detectLineEnding(data);
+                config.options.sectionsAsArrays = sectionsAsArrays;
+                var decoded1 = config.decode(data);
+                var encoded1 = config.encode(decoded1);
+                var decoded2 = config.decode(encoded1);
+                var encoded2 = config.encode(decoded2);
+                expect(encoded1).toBe(encoded2);
+                expect(decoded1).toEqual(decoded2);
+            }
+        });
     });
 
     it('decode should be able to handle multiple comment identifier', function () {
@@ -108,6 +125,17 @@ describe('Config', function() {
         var result = config.decode("[Section]\nfoo:bar\n");
         expect(result.Section).toBeDefined();
         expect(result.Section.foo).toBe("bar");
+    });
+
+    it('decode should match section identifiers literally', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        config.options.sectionOpenIdentifier = "[[";
+        config.options.sectionCloseIdentifier = "]]";
+        expect(config.decode("[[A]]\na=1\n")).toEqual({A: {a: "1"}});
+        config.options.sectionOpenIdentifier = "S";
+        config.options.sectionCloseIdentifier = "E";
+        expect(config.decode("SAE\na=1\nxSBE\n")).toEqual({A: {a: "1", xSBE: true}});
     });
 
     it('decode should prevent prototype pollution attacks', function () {
@@ -181,4 +209,56 @@ describe('Config', function() {
         var result = config.decode("foo=1\n[foo]\na=2\n");
         expect(result).toEqual({foo: "1"});
     });
+
+    it('decode should handle prototype member names, protected sections and stray key collisions when sectionsAsArrays=true', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        config.options.sectionsAsArrays = true;
+        var result = config.decode("foo=1\n[foo]\na=2\n[constructor]\nx=1\n[toString]\ny=2\n[A]\na=1\n[__proto__]\npolluted=1\n[A]\nb=2\n");
+        expect(result).toEqual({
+            foo: "1",
+            constructor: [{x: "1"}],
+            toString: [{y: "2"}],
+            A: [{a: "1"}, {b: "2"}]
+        });
+        expect(Object.x).toBeUndefined();
+        expect({}.polluted).toBeUndefined();
+    });
+
+    it('double sections should be merged when sectionsAsArrays=false', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        expect(config.decode(testData[3])).toEqual({SectionA: {a: '7', b: '8', c: '9'}});
+        expect(config.decode("[A]\na=1\nb=2\n[A]\na=3\n")).toEqual({A: {a: '3', b: '2'}});
+    })
+
+    it('double sections should be an array when sectionsAsArrays=true', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        config.options.sectionsAsArrays = true;
+        expect(config.decode(testData[3])).toEqual({SectionA: [
+            {a: '1', b: '2', c: '3'},
+            {a: '4', b: '5', c: '6'},
+            {a: '7', b: '8', c: '9'}
+        ]});
+    })
+
+    it('encode should write arrays of objects as repeated sections only when sectionsAsArrays=true', function () {
+        var data = {A: [{a: 1}, {a: 2}]};
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        expect(config.encode(data)).toBe("[A]\n0=[object Object]\n1=[object Object]\n");
+        config.options.sectionsAsArrays = true;
+        expect(config.encode(data)).toBe("[A]\na=1\n\n[A]\na=2\n");
+    })
+
+    it('encode should write arrays of non-objects with index keys regardless of sectionsAsArrays', function () {
+        var data = {A: ["x", "y"], B: [{a: 1}, "z"], C: []};
+        var expected = "[A]\n0=x\n1=y\n\n[B]\n0=[object Object]\n1=z\n\n[C]\n";
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        expect(config.encode(data)).toBe(expected);
+        config.options.sectionsAsArrays = true;
+        expect(config.encode(data)).toBe(expected);
+    })
 });

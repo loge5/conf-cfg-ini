@@ -14,11 +14,12 @@ But none of these fits all my needs.
 So here is an attempt to create a very flexible but easy to use parser.
 
 **Features**
+- Plain ES5, no dependencies (any Node.js version / IE9+)
 - Linebreak detection (windows, unix, mac)
 - Set custom identifiers for sections, comments and assignments
 - line trim is optional
 - set default value
-- tested with mocha+chai
+- tested with Jest
 
 ### Installation ###
 ```Shell
@@ -93,3 +94,4 @@ config.options.lineEnding = "\n";
 | trimLines                      | true          | Ignore space                             |
 | valueIdentifier                | undefined     | surroundings of values (key="value1")    |
 | ignoreMultipleAssignIdentifier | false         | `A==B` would be read as `A=B` (usefull for tab/spaced files)|
+| sectionsAsArrays               | false         | Every section is decoded as an array of objects, so duplicate sections are kept separately instead of being merged into one object. Arrays of objects are encoded as repeated sections |
