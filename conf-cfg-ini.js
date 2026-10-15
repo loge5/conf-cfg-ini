@@ -35,9 +35,8 @@ Config.prototype.decode = function(data){
             throw new Error('expecting string but got '+typeof data);
         }
     }
-    var protectedKeys = ['__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__', '__proto__'];
     var result = {};
-    var currentSection = undefined;
+    var currentTarget = result;
     var lines = data.split(this.options.lineEnding);
     for(var i = 0; i < lines.length; i++){
         var line = lines[i];
@@ -51,10 +50,7 @@ Config.prototype.decode = function(data){
         var sectionRegExp = new RegExp("^\\"+this.options.sectionOpenIdentifier+"(.*?)\\"+this.options.sectionCloseIdentifier+"$");
         var newSection = line.match(sectionRegExp);
         if(newSection !== null){
-            currentSection = newSection[1];
-            if(typeof result[currentSection] === 'undefined' && !protectedKeys.includes(currentSection)){
-                result[currentSection] = {};
-            }
+            currentTarget = openSection(result, newSection[1]);
             continue;
         }
 
@@ -79,14 +75,10 @@ Config.prototype.decode = function(data){
         if (typeof this.options.valueIdentifier === 'string') {
             value = this.valueTrim(value, this.options.valueIdentifier);
         }
-        if (protectedKeys.includes(currentSection) || protectedKeys.includes(key)) {
+        if (protectedKeys.includes(key)) {
             continue;
         }
-        if(typeof currentSection === 'undefined'){
-            result[key] = value;
-        } else {
-            result[currentSection][key] = value;
-        }
+        currentTarget[key] = value;
     }
     return result;
 }
@@ -188,6 +180,28 @@ Config.prototype.valueTrim = function(value, chars){
     regEx = new RegExp("["+charsEscaped+"]?$");
     value = value.replace(regEx, '');
     return value;
+}
+
+var protectedKeys = ['__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__', '__proto__'];
+
+/**
+ * Return the object the keys of section `name` are written to.
+ * Keys of protected sections, or of sections whose name is already used by a
+ * stray key, go to a detached object and are dropped.
+ * Only own properties count, so names like `constructor` or `toString`
+ * never resolve to inherited members of Object.prototype.
+ * @param {{}} result
+ * @param {string} name
+ * @return {{}}
+ */
+function openSection(result, name){
+    if(protectedKeys.includes(name)){
+        return {};
+    }
+    if(!Object.prototype.hasOwnProperty.call(result, name)){
+        result[name] = {};
+    }
+    return typeof result[name] === 'object' ? result[name] : {};
 }
 
 /**

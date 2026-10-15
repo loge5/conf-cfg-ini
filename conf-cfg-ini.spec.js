@@ -153,4 +153,32 @@ describe('Config', function() {
         expect(result.b).toBe("2");
         expect(result.c).toBe("3\t");
     })
+
+    it('decode should treat names of Object.prototype members as normal sections', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        var result = config.decode("[constructor]\nx=1\n[toString]\ny=2\n[hasOwnProperty]\nz=3\n");
+        expect(result).toEqual({
+            constructor: {x: "1"},
+            toString: {y: "2"},
+            hasOwnProperty: {z: "3"}
+        });
+        expect(Object.x).toBeUndefined();
+        expect(Object.prototype.toString.y).toBeUndefined();
+    });
+
+    it('decode should drop keys of protected sections without touching other sections', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        var result = config.decode("[A]\na=1\n[__proto__]\npolluted=1\n[A]\nb=2\n");
+        expect(result).toEqual({A: {a: "1", b: "2"}});
+        expect({}.polluted).toBeUndefined();
+    });
+
+    it('decode should keep a stray key when a section has the same name', function () {
+        var config = new Config();
+        config.options.lineEnding = "\n";
+        var result = config.decode("foo=1\n[foo]\na=2\n");
+        expect(result).toEqual({foo: "1"});
+    });
 });
