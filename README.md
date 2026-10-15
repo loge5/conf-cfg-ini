@@ -1,9 +1,6 @@
 # conf-cfg-ini
 
 [![npm version](https://badge.fury.io/js/conf-cfg-ini.svg)](http://badge.fury.io/js/conf-cfg-ini)
-[![Build Status](https://travis-ci.org/loge5/conf-cfg-ini.svg?branch=master)](https://travis-ci.org/loge5/conf-cfg-ini)
-[![dependencies Status](https://david-dm.org/loge5/conf-cfg-ini/status.svg)](https://david-dm.org/loge5/conf-cfg-ini)
-[![devDependencies Status](https://david-dm.org/loge5/conf-cfg-ini/dev-status.svg)](https://david-dm.org/loge5/conf-cfg-ini?type=dev)
 
 **Encode and decode conf/cfg/ini-Files with Node.js**
 
